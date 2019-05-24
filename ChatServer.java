@@ -21,7 +21,7 @@ public class ChatServer {
 }
 
 class ChatThread extends Thread{
-	private static String[] badWordList = {"시발", "씨발","새끼", "존나", "씹", "지랄", "좆", "꺼저"};	// static 배열
+	private static String[] badWordList = {"시발", "씨발","새끼", "존나", "씹", "지랄", "좆", "꺼저"};	// static 배열을 만들어서 비속어 필터링때 사용하자.
 
 	private Socket sock;
 	private String id;
@@ -111,7 +111,7 @@ class ChatThread extends Thread{
 			while(iter.hasNext()){
 				PrintWriter pw = (PrintWriter)iter.next();
 				if (pw.equals(self))						// 같은지 비교.
-					continue;
+					continue;								// 같으면 보내지 않고 다음으로 넘어가기.
 				pw.println(msg);
 				pw.flush();
 			}
