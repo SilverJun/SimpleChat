@@ -8,23 +8,23 @@ public class ChatClient {
 			System.out.println("Usage : java ChatClient <username> <server-ip>");
 			System.exit(1);
 		}
-		Socket sock = null;
-		BufferedReader br = null;
-		PrintWriter pw = null;
+		Socket sock = null;			// client socket
+		BufferedReader br = null;	// Socket recv
+		PrintWriter pw = null;		// Socket send
 		boolean endflag = false;
 		try{
 			sock = new Socket(args[1], 10001);
 			pw = new PrintWriter(new OutputStreamWriter(sock.getOutputStream()));
 			br = new BufferedReader(new InputStreamReader(sock.getInputStream()));
-			BufferedReader keyboard = new BufferedReader(new InputStreamReader(System.in));
+			BufferedReader keyboard = new BufferedReader(new InputStreamReader(System.in));		// System keyboard
 			// send username.
 			pw.println(args[0]);
 			pw.flush();
 			InputThread it = new InputThread(sock, br);
 			it.start();
 			String line = null;
-			while((line = keyboard.readLine()) != null){
-				pw.println(line);
+			while((line = keyboard.readLine()) != null){		// get string by keyboard
+				pw.println(line);		// send string to socket
 				pw.flush();
 				if(line.equals("/quit")){
 					endflag = true;
@@ -59,10 +59,10 @@ class InputThread extends Thread{
 		this.sock = sock;
 		this.br = br;
 	}
-	public void run(){
+	public void run(){		// why Thread need? because while you input something, you can recv messages from server.
 		try{
 			String line = null;
-			while((line = br.readLine()) != null){
+			while((line = br.readLine()) != null){		// if recv, print message.
 				System.out.println(line);
 			}
 		}catch(Exception ex){
