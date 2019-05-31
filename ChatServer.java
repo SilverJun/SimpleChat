@@ -25,7 +25,7 @@ public class ChatServer {
 }
 
 class ChatThread extends Thread{
-	private static String[] badWordList = {"시발", "씨발","새끼", "존나", "씹", "지랄", "좆", "꺼저"};	// static 배열을 만들어서 비속어 필터링때 사용하자.
+	private static ArrayList<String> badWordList = new ArrayList<String>();	// static 배열을 만들어서 비속어 필터링때 사용하자.
 
 	private Socket sock;
 	private String id;
@@ -73,6 +73,14 @@ class ChatThread extends Thread{
 				else if (line.equals("/userlist")) {
 					send_userlist();
 				}
+				else if (line.equals("/spamlist"))
+				{
+					sendCurBadWordList();
+				}
+				else if (line.indexOf("/addspam ") == 0)
+				{
+					addNewBadWord(line);
+				}
 				else
 					broadcast(id + " : " + line);
 			}
@@ -83,6 +91,7 @@ class ChatThread extends Thread{
 			synchronized(hm){
 				hm.remove(id);
 			}
+			System.out.println(getCurTimeString()+ id + " exited.");	// add exit log.
 			broadcast(id + " exited.");
 			try{
 				if(sock != null)
@@ -98,12 +107,15 @@ class ChatThread extends Thread{
 		if(end != -1){
 			String to = msg.substring(start, end);
 			String msg2 = msg.substring(end+1);
-			Object obj = hm.get(to);
-			if(obj != null){
-				PrintWriter pw = (PrintWriter)obj;
-				pw.println(tempDate + id + " whisphered. : " + msg2);
-				pw.flush();
-			} // if
+			synchronized (hm)
+			{	
+				Object obj = hm.get(to);
+				if(obj != null){
+					PrintWriter pw = (PrintWriter)obj;
+					pw.println(tempDate + id + " whisphered. : " + msg2);
+					pw.flush();
+				} // if
+			}
 		}
 	} // sendmsg
 
@@ -117,14 +129,11 @@ class ChatThread extends Thread{
 			Iterator iter = collection.iterator();
 			PrintWriter self = (PrintWriter)hm.get(id);		// 자신의 PrintWriter를 받아와서
 
-			// clock add.
-
+			String tempDate = getCurTimeString();
 			while(iter.hasNext()){
 				PrintWriter pw = (PrintWriter)iter.next();
 				if (pw.equals(self))						// 같은지 비교.
 					continue;								// 같으면 보내지 않고 다음으로 넘어가기.
-					
-				String tempDate = getCurTimeString();
 				pw.println(tempDate+msg);
 				pw.flush();
 			}
@@ -140,7 +149,7 @@ class ChatThread extends Thread{
 			PrintWriter pw = (PrintWriter)hm.get(id);
 			
 			String tempDate = getCurTimeString();
-			pw.println(tempDate+"----start userlist----");
+			pw.println(tempDate+"----userlist----");
 			Collection collection = hm.keySet();			// 키들의 집합을 가져옴.
 			Iterator iter = collection.iterator();
 			while(iter.hasNext()){
@@ -157,14 +166,60 @@ class ChatThread extends Thread{
 	 */
 	public boolean isBadWord(String line)
 	{
-		for(String word:badWordList)
+		synchronized(badWordList)
 		{
-			if (line.contains(word))			// 단어가 있는지 확인
-				return true;
+			for(String word:badWordList)
+			{
+				if (line.contains(word))			// 단어가 있는지 확인
+					return true;
+			}
 		}
 		return false;
 	}
 
+	public void sendCurBadWordList()
+	{
+		synchronized(hm) {
+			PrintWriter pw = (PrintWriter)hm.get(id);
+			String tempDate = getCurTimeString();
+			pw.println(tempDate+"----spamlist----");
+			pw.flush();
+			synchronized(badWordList)					// 출력중에 다른 스레드 접근을 막는다.
+			{
+				for (String iter : badWordList)
+				{
+					pw.println(getCurTimeString()+iter);
+					pw.flush();
+				}
+			}
+		}
+	}
+
+	public void addNewBadWord(String str)
+	{
+		String word = str.substring(9);		// 금지어 추출.
+		synchronized (hm)
+		{
+			PrintWriter pw = (PrintWriter)hm.get(id);
+			if (isBadWord(word))						// 금지어가 이미 존재하면 
+			{
+				pw.println(getCurTimeString()+word+" already spamlist!");		// 이미 있다고 알리기.
+				pw.flush();
+			}
+			synchronized(badWordList)					// add 중에 다른 스레드 접근을 막는다.
+			{	
+				badWordList.add(word);
+			}
+			pw.println(getCurTimeString()+word+" successfully added in spamlist!");		// 성공적으로 넣어졌다고 알림.
+			pw.flush();
+		}
+	}
+
+	/**
+	 * This method is help function to get Current Time String.
+	 * 모든 출력 메세지에 시간을 붙여줘야 하니까 이렇게 메소드로 만들었음.
+	 * @return Current Time String.
+	 */
 	public String getCurTimeString()
 	{
 		SimpleDateFormat sdFormat = new SimpleDateFormat("[HH:mm:ss]");
