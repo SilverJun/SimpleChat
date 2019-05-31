@@ -1,4 +1,8 @@
+
+// https://github.com/SilverJun/SimpleChat
+
 import java.net.*;
+import java.text.SimpleDateFormat;
 import java.io.*;
 import java.util.*;
 
@@ -36,26 +40,27 @@ class ChatThread extends Thread{
 			br = new BufferedReader(new InputStreamReader(sock.getInputStream()));
 			id = br.readLine();
 			broadcast(id + " entered.");
-			System.out.println("[Server] User (" + id + ") entered.");
+			String tempDate = getCurTimeString();
+			System.out.println(tempDate+"[Server] User (" + id + ") entered.");
 			synchronized(hm){
 				hm.put(this.id, pw);
 			}
 			initFlag = true;
 		}catch(Exception ex){
-			System.out.println(ex);
+			String tempDate = getCurTimeString();
+			System.out.println(tempDate+ex);
 		}
 	} // construcor
 	public void run(){
 		try{
 			String line = null;
 			while((line = br.readLine()) != null){
-				System.out.println(id+"-"+line);		// 로그용
-
 				if (isBadWord(line))			// 만약 문장에 비속어가 있어면 체크하고 없애주기.
 				{
+					String tempDate = getCurTimeString();
 					synchronized(hm){
 						PrintWriter pw = (PrintWriter)hm.get(id);
-						pw.println("경고: 비속어를 사용해 서버에 의해 필터링 되었습니다.");		// 그 사람에게 경고.
+						pw.println(tempDate+"경고: 비속어를 사용해 서버에 의해 필터링 되었습니다.");		// 그 사람에게 경고.
 						pw.flush();
 					}
 					continue;
@@ -72,7 +77,8 @@ class ChatThread extends Thread{
 					broadcast(id + " : " + line);
 			}
 		}catch(Exception ex){
-			System.out.println(ex);
+			String tempDate = getCurTimeString();
+			System.out.println(tempDate+ex);
 		}finally{
 			synchronized(hm){
 				hm.remove(id);
@@ -87,13 +93,15 @@ class ChatThread extends Thread{
 	public void sendmsg(String msg){
 		int start = msg.indexOf(" ") +1;
 		int end = msg.indexOf(" ", start);
+		String tempDate = getCurTimeString();
+
 		if(end != -1){
 			String to = msg.substring(start, end);
 			String msg2 = msg.substring(end+1);
 			Object obj = hm.get(to);
 			if(obj != null){
 				PrintWriter pw = (PrintWriter)obj;
-				pw.println(id + " whisphered. : " + msg2);
+				pw.println(tempDate + id + " whisphered. : " + msg2);
 				pw.flush();
 			} // if
 		}
@@ -108,11 +116,15 @@ class ChatThread extends Thread{
 			Collection collection = hm.values();
 			Iterator iter = collection.iterator();
 			PrintWriter self = (PrintWriter)hm.get(id);		// 자신의 PrintWriter를 받아와서
+
+			// clock add.
+			String tempDate = getCurTimeString();
+
 			while(iter.hasNext()){
 				PrintWriter pw = (PrintWriter)iter.next();
 				if (pw.equals(self))						// 같은지 비교.
 					continue;								// 같으면 보내지 않고 다음으로 넘어가기.
-				pw.println(msg);
+				pw.println(tempDate+msg);
 				pw.flush();
 			}
 		}
@@ -148,5 +160,14 @@ class ChatThread extends Thread{
 				return true;
 		}
 		return false;
+	}
+
+	public String getCurTimeString()
+	{
+		SimpleDateFormat sdFormat = new SimpleDateFormat("[HH:mm:ss]");
+		Date nowDate = new Date();
+		String tempDate = sdFormat.format(nowDate);
+		tempDate += " ";
+		return tempDate;
 	}
 }
