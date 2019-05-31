@@ -177,6 +177,9 @@ class ChatThread extends Thread{
 		return false;
 	}
 
+	/**
+	 * 현재 금지어 리스트를 보여주는 함수.
+	 */
 	public void sendCurBadWordList()
 	{
 		synchronized(hm) {
@@ -186,7 +189,7 @@ class ChatThread extends Thread{
 			pw.flush();
 			synchronized(badWordList)					// 출력중에 다른 스레드 접근을 막는다.
 			{
-				for (String iter : badWordList)
+				for (String iter : badWordList)			// for each 루프로 이터레이션.
 				{
 					pw.println(getCurTimeString()+iter);
 					pw.flush();
@@ -195,6 +198,10 @@ class ChatThread extends Thread{
 		}
 	}
 
+	/**
+	 * 만약 금지어가 리스트에 없으면 추가. 있으면 존재한다고 알리기.
+	 * @param str line of message
+	 */
 	public void addNewBadWord(String str)
 	{
 		String word = str.substring(9);		// 금지어 추출.
