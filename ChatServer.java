@@ -118,12 +118,13 @@ class ChatThread extends Thread{
 			PrintWriter self = (PrintWriter)hm.get(id);		// 자신의 PrintWriter를 받아와서
 
 			// clock add.
-			String tempDate = getCurTimeString();
 
 			while(iter.hasNext()){
 				PrintWriter pw = (PrintWriter)iter.next();
 				if (pw.equals(self))						// 같은지 비교.
 					continue;								// 같으면 보내지 않고 다음으로 넘어가기.
+					
+				String tempDate = getCurTimeString();
 				pw.println(tempDate+msg);
 				pw.flush();
 			}
