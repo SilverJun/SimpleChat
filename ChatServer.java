@@ -138,14 +138,16 @@ class ChatThread extends Thread{
 	public void send_userlist() {
 		synchronized(hm) {
 			PrintWriter pw = (PrintWriter)hm.get(id);
-			pw.println("----start userlist----");
+			
+			String tempDate = getCurTimeString();
+			pw.println(tempDate+"----start userlist----");
 			Collection collection = hm.keySet();			// 키들의 집합을 가져옴.
 			Iterator iter = collection.iterator();
 			while(iter.hasNext()){
-				pw.println((String)iter.next());			// 키들을 전부 전송.
+				pw.println(getCurTimeString()+(String)iter.next());			// 키들을 전부 전송.
 				pw.flush();
 			}
-			pw.println("total: " + collection.size());		// 토탈 size까지 전송. 끝.
+			pw.println(getCurTimeString()+"total: " + collection.size());		// 토탈 size까지 전송. 끝.
 			pw.flush();
 		}
 	}
